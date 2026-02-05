@@ -1,0 +1,11 @@
+CompileFlags:
+  Compiler: D:/Program Files (x86)/GNU Arm Embedded Toolchain/10 2021.10/bin/arm-none-eabi-gcc
+  Add:
+    [
+      -ID:/Program Files (x86)/GNU Arm Embedded Toolchain/10 2021.10/arm-none-eabi/include,
+    ]
+
+Diagnostics:
+  UnusedIncludes: None
+  MissingIncludes: None
+  Suppress: ["-Wunused-parameter"]

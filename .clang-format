@@ -1,0 +1,38 @@
+BasedOnStyle: Google  # 基于 Google 的代码风格模板进行定制。
+
+UseTab: Never             # 禁用制表符，使用空格进行缩进。
+TabWidth: 4               # 设置制表符宽度为 4 个空格。
+IndentWidth: 4            # 缩进宽度设置为 4 个空格。
+ColumnLimit: 100            # 每行的最大字符数不受限制（无限制）。
+AccessModifierOffset: -4  # 访问修饰符（如 public、private）缩进 -4 个空格，使其与类成员对齐。
+  
+ReflowComments: "IndentOnly"        # 是否重新调整注释，使其符合 ColumnLimit 约束。
+FixNamespaceComments: true  # 为命名空间关闭注释补充必要的说明，如 `// namespace foo`。
+
+AllowShortFunctionsOnASingleLine: Inline             # 允许所有短函数（包括空函数）放在同一行。
+AllowShortBlocksOnASingleLine: Empty              # 允许所有短代码块放在同一行。
+AllowShortEnumsOnASingleLine: true                # 允许短枚举放在同一行。
+AllowShortCompoundRequirementOnASingleLine: true  # 允许短的复合需求语句放在一行上。
+AllowShortLambdasOnASingleLine: "Inline"              # 允许短的 Lambda 表达式放在一行上。
+
+
+BinPackArguments: false         # 函数调用的参数要么都在同一行，要么各一行。
+BinPackParameters: OnePerLine   # 函数声明或函数定义的形参要么都在同一行，要么各有一行。
+
+BreakBeforeBraces: Linux                    # 大括号风格遵循 Linux 规则：函数和控制语句后不换行。
+BreakInheritanceList: BeforeComma           # 在继承列表中的逗号之前换行。
+BreakConstructorInitializers: BeforeComma   # 构造函数的初始化列表在逗号之前换行。
+BreakBeforeBinaryOperators: NonAssignment   # 对于非赋值操作符，在操作符前换行。
+BreakBeforeTernaryOperators: true           # 在三元操作符的 `?` 和 `:` 之前换行。
+
+AlignTrailingComments: true                   # 对齐行尾注释（将同一块代码的注释对齐到列的右侧）。
+AlignAfterOpenBracket: Align                  # 当多行参数需要换行时，参数与第一个括号对齐。
+AlignOperands: AlignAfterOperator             # 操作数在操作符之后对齐。
+AlignConsecutiveDeclarations: AcrossComments  # 在连续声明中跨注释对齐。
+AlignConsecutiveAssignments: AcrossComments   # 连续赋值语句在跨注释的情况下对齐。
+AlignConsecutiveMacros: AcrossComments        # 连续宏定义在跨注释的情况下对齐。
+AlignConsecutiveBitFields: AcrossComments     # 连续位字段在跨注释的情况下对齐。
+AlignEscapedNewlines: Left                    # 将换行符向左对齐。
+AlignArrayOfStructures: Left                  # 数组中的结构体字段向左对齐。
+
+CompactNamespaces: true  # 紧凑命名空间的声明和内容，避免额外的空行，将命名空间内容和声明放在一起。
