@@ -75,7 +75,6 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     User/comm/protocol/motion_listener.c
     User/comm/protocol/arm_listener.c
     User/comm/protocol/config_listener.c
-    User/comm/protocol/motion_cycle_listener.c
     User/comm/protocol/state_sender.c
 
     ### comm - drivers 驱动
