@@ -23,7 +23,6 @@ typedef enum {
     PROTO_TYPE_SERVO        = 0x10,
     PROTO_TYPE_MOTION       = 0x11,
     PROTO_TYPE_ARM          = 0x12,
-    PROTO_TYPE_MOTION_CYCLE = 0x13,
     PROTO_TYPE_STATE        = 0xD0,
     PROTO_TYPE_CONFIG       = 0xE0,
     PROTO_TYPE_DEBUG        = 0xF0,
@@ -58,6 +57,14 @@ typedef enum {
     MOTION_CMD_SET_PLAN   = 0x05,
     MOTION_CMD_GET_STATUS = 0x06,
     MOTION_CMD_STATUS     = 0x07,
+    MOTION_CMD_CYCLE_CREATE  = 0x10,
+    MOTION_CMD_CYCLE_START   = 0x11,
+    MOTION_CMD_CYCLE_RESTART = 0x12,
+    MOTION_CMD_CYCLE_PAUSE   = 0x13,
+    MOTION_CMD_CYCLE_RELEASE = 0x14,
+    MOTION_CMD_CYCLE_GET_STATUS = 0x15,
+    MOTION_CMD_CYCLE_STATUS     = 0x16,
+    MOTION_CMD_CYCLE_LIST    = 0x17,
 } proto_motion_cmd_t;
 
 // ARM commands
@@ -85,19 +92,7 @@ typedef enum {
     STATE_CMD_MOTION       = 0x03,
     STATE_CMD_ARM          = 0x04,
     STATE_CMD_CONFIG       = 0x05,
-    STATE_CMD_MOTION_CYCLE = 0x06,
 } proto_state_cmd_t;
-
-// MOTION_CYCLE commands
-typedef enum {
-    CYCLE_CMD_CREATE     = 0x01,
-    CYCLE_CMD_START      = 0x02,
-    CYCLE_CMD_RESTART    = 0x03,
-    CYCLE_CMD_PAUSE      = 0x04,
-    CYCLE_CMD_RELEASE    = 0x05,
-    CYCLE_CMD_GET_STATUS = 0x06,
-    CYCLE_CMD_STATUS     = 0x07,
-} proto_cycle_cmd_t;
 
 typedef struct {
     uint8_t        cmd;
@@ -185,7 +180,6 @@ bool protocol_servo_handle(uint8_t cmd, const uint8_t* payload, uint16_t len);
 bool protocol_motion_handle(uint8_t cmd, const uint8_t* payload, uint16_t len);
 bool protocol_arm_handle(uint8_t cmd, const uint8_t* payload, uint16_t len);
 bool protocol_config_handle(uint8_t cmd, const uint8_t* payload, uint16_t len);
-bool protocol_motion_cycle_handle(uint8_t cmd, const uint8_t* payload, uint16_t len);
 
 // State sender
 bool protocol_send_state(uint8_t cmd, const uint8_t* payload, uint16_t len);

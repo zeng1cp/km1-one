@@ -1,5 +1,5 @@
-#include "protocol.h"
-#include "tinyframe/TinyFrame.h"
+#include "../protocol.h"
+#include "../transport/TinyFrame/TinyFrame.h"
 #include "tf_uart_port.h"
 
 TF_Result protocol_sys_listener(TinyFrame* tf, TF_Msg* msg)

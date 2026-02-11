@@ -39,8 +39,8 @@ void TF_WriteImpl(TinyFrame* tf, const uint8_t* buff, uint32_t len)
     if (uart_driver_send_async(buff, len) != 0) {
         TF_UART_LOG("UART send failed");
     } else {
-        TF_UART_LOG("UART send success");
-        dumpFrame(buff, len);
+        // TF_UART_LOG("UART send success");
+        //dumpFrame(buff, len);
     }
 }
 
@@ -51,7 +51,6 @@ static TF_Result tf_frame_listener(TinyFrame* tf, TF_Msg* msg)
 {
     TF_UART_LOG("UART received:");
     dumpFrameInfo(msg);
-    TF_Send(tf, msg);
     // Call user callback (frame type and payload)
     if (user_callback != NULL) {
         user_callback(msg->type, msg->data, msg->len);

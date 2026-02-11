@@ -24,7 +24,7 @@ static void on_servo_complete(uint8_t servo_id)
     // 1. 先调用舵机自己的回调（如果设置了）
     if (sm->complete_callback != NULL) {
         sm->complete_callback(servo_id);
-        // 注意：调用后不清除，以便复用
+        sm->complete_callback = NULL;
     }
 
     // 2. 再调用全局回调（用于同步管理器）
@@ -119,12 +119,6 @@ servo_t servo_motion_get_params(uint8_t id)
     return servo_motions[id].servo;
 }
 
-void servo_motion_set_complete_callback(uint8_t id, servo_motion_complete_cb_t callback)
-{
-    if (id >= MAX_SERVOS) return;
-    servo_motions[id].complete_callback = callback;
-}
-
 // 设置全局完成回调
 void servo_motion_set_global_complete_callback(servo_motion_complete_cb_t callback)
 {
@@ -190,7 +184,10 @@ float pwm_to_angle(uint8_t id, uint32_t pwm_us)
 
 // ==================== 运动控制 ====================
 
-void servo_move_pwm(uint8_t id, uint32_t pwm_us, uint32_t duration_ms)
+void servo_move_pwm(uint8_t                    id,
+                    uint32_t                   pwm_us,
+                    uint32_t                   duration_ms,
+                    servo_motion_complete_cb_t cb)
 {
     if (id >= MAX_SERVOS) return;
 
@@ -204,30 +201,36 @@ void servo_move_pwm(uint8_t id, uint32_t pwm_us, uint32_t duration_ms)
     // 如果已经在目标位置，直接返回
     if (pwm_us == sm->current_pwm) {
         sm->is_moving = false;
+        on_servo_complete(id);
         return;
     }
 
     // 设置运动参数
-    sm->start_pwm   = sm->current_pwm;
-    sm->target_pwm  = pwm_us;
-    sm->steps_total = duration_ms;
-    sm->steps_left  = duration_ms;
-    sm->is_moving   = true;
+    sm->start_pwm         = sm->current_pwm;
+    sm->target_pwm        = pwm_us;
+    sm->steps_total       = duration_ms;
+    sm->steps_left        = duration_ms;
+    sm->is_moving         = true;
+    sm->complete_callback = cb;
 
     // 设置全局运动掩码
     global_moving_mask |= (1 << id);
 }
 
-void servo_move_angle(uint8_t id, float angle_deg, uint32_t duration_ms)
+void servo_move_angle(uint8_t                    id,
+                      float                      angle_deg,
+                      uint32_t                   duration_ms,
+                      servo_motion_complete_cb_t cb)
 {
     if (id >= MAX_SERVOS) return;
-    // 转换为PWM
     uint32_t target_pwm = angle_to_pwm(id, angle_deg);
-    // 调用PWM版本，复用所有检查和处理逻辑
-    servo_move_pwm(id, target_pwm, duration_ms);
+    servo_move_pwm(id, target_pwm, duration_ms, cb);
 }
 
-void servo_move_relative(uint8_t id, float delta_deg, uint32_t duration_ms)
+void servo_move_relative(uint8_t                    id,
+                         float                      delta_deg,
+                         uint32_t                   duration_ms,
+                         servo_motion_complete_cb_t cb)
 {
     if (id >= MAX_SERVOS) return;
 
@@ -236,16 +239,16 @@ void servo_move_relative(uint8_t id, float delta_deg, uint32_t duration_ms)
     float target_angle  = current_angle + delta_deg;
 
     // 移动到新角度
-    servo_move_angle(id, target_angle, duration_ms);
+    servo_move_angle(id, target_angle, duration_ms, cb);
 }
 
-void servo_move_home(uint8_t id, uint32_t duration_ms)
+void servo_move_home(uint8_t id, uint32_t duration_ms, servo_motion_complete_cb_t cb)
 {
     if (id >= MAX_SERVOS) return;
 
     // 移动到中位角度
     servo_motion_t* sm = &servo_motions[id];
-    servo_move_angle(id, sm->servo.mid_angle_deg, duration_ms);
+    servo_move_pwm(id, sm->servo.mid_pwm_us, duration_ms, cb);
 }
 
 // 输出 current_pwm 到 PWM 硬件
@@ -260,28 +263,28 @@ void servo_sync_to_hardware(void)
 // ==================== 多舵机控制 ====================
 
 // 角度控制版本
-void servo_move_angle_multiple(const uint8_t ids[],
-                               const float   angles[],
-                               uint8_t       count,
-                               uint32_t      duration_ms)
+void servo_move_angle_multiple(const uint8_t              ids[],
+                               const float                angles[],
+                               uint8_t                    count,
+                               uint32_t                   duration_ms,
+                               servo_motion_complete_cb_t cb)
 {
     if (ids == NULL || angles == NULL || count == 0) return;
-
     for (uint8_t i = 0; i < count; i++) {
-        servo_move_angle(ids[i], angles[i], duration_ms);
+        servo_move_angle(ids[i], angles[i], duration_ms, cb);
     }
 }
 
 // PWM控制版本
-void servo_move_pwm_multiple(const uint8_t  ids[],
-                             const uint32_t pwms[],
-                             uint8_t        count,
-                             uint32_t       duration_ms)
+void servo_move_pwm_multiple(const uint8_t              ids[],
+                             const uint32_t             pwms[],
+                             uint8_t                    count,
+                             uint32_t                   duration_ms,
+                             servo_motion_complete_cb_t cb)
 {
     if (ids == NULL || pwms == NULL || count == 0) return;
-
     for (uint8_t i = 0; i < count; i++) {
-        servo_move_pwm(ids[i], pwms[i], duration_ms);
+        servo_move_pwm(ids[i], pwms[i], duration_ms, cb);
     }
 }
 

@@ -1,5 +1,5 @@
-#include "protocol.h"
-#include "tinyframe/TinyFrame.h"
+#include "../protocol.h"
+#include "../transport/TinyFrame/TinyFrame.h"
 #include "motion_engine.h"
 #include "robot_arm_control.h"
 
@@ -15,11 +15,8 @@ TF_Result protocol_arm_listener(TinyFrame* tf, TF_Msg* msg)
         return TF_NEXT;
     }
 
-    if (protocol_arm_handle(cmd_view.cmd, cmd_view.payload, cmd_view.payload_len)) {
+    (void)protocol_arm_handle(cmd_view.cmd, cmd_view.payload, cmd_view.payload_len);
         return TF_STAY;
-    }
-
-    return TF_NEXT;
 }
 
 bool protocol_arm_handle(uint8_t cmd, const uint8_t* payload, uint16_t len)
@@ -36,7 +33,7 @@ bool protocol_arm_handle(uint8_t cmd, const uint8_t* payload, uint16_t len)
                 return false;
             }
             for (uint8_t id = 0; id < ARM_JOINT_COUNT; ++id) {
-                servo_move_home(id, duration);
+                servo_move_home(id, duration, NULL);
             }
             return true;
         }
@@ -63,7 +60,7 @@ bool protocol_arm_handle(uint8_t cmd, const uint8_t* payload, uint16_t len)
             for (uint8_t i = 0; i < ARM_JOINT_COUNT; ++i) {
                 ids[i] = i;
             }
-            servo_move_angle_multiple(ids, angles, ARM_JOINT_COUNT, duration);
+            servo_move_angle_multiple(ids, angles, ARM_JOINT_COUNT, duration, NULL);
             return true;
         }
         case ARM_CMD_GET_STATUS: {

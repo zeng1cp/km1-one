@@ -70,12 +70,12 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     
     ### comm - 协议定义
     User/comm/protocol/protocol.c
-    User/comm/protocol/sys_listener.c
-    User/comm/protocol/servo_listener.c
-    User/comm/protocol/motion_listener.c
-    User/comm/protocol/arm_listener.c
-    User/comm/protocol/config_listener.c
     User/comm/protocol/state_sender.c
+    User/comm/protocol/listener/sys_listener.c
+    User/comm/protocol/listener/servo_listener.c
+    User/comm/protocol/listener/motion_listener.c
+    User/comm/protocol/listener/arm_listener.c
+    User/comm/protocol/listener/config_listener.c
 
     ### comm - drivers 驱动
     User/comm/drivers/uart_driver.c

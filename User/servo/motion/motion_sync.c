@@ -42,10 +42,8 @@ void motion_sync_init(void)
     memset(sync_groups, 0, sizeof(sync_groups));
     next_group_id = 1;
 
-    /* 注册每个舵机的完成回调 */
-    for (uint8_t i = 0; i < MAX_SERVOS; i++) {
-        servo_motion_set_complete_callback(i, on_servo_motion_complete);
-    }
+    /* 注册舵机的完成回调 */
+    servo_motion_set_global_complete_callback(on_servo_motion_complete);
 }
 
 void motion_sync_deinit(void)
@@ -226,7 +224,7 @@ uint32_t motion_sync_move_angle(const uint8_t            servo_ids[],
     sync_group_t* g = find_group(gid);
     if (g) g->cb = cb;
 
-    for (uint8_t i = 0; i < count; i++) servo_move_angle(servo_ids[i], angles[i], duration_ms);
+    for (uint8_t i = 0; i < count; i++) servo_move_angle(servo_ids[i], angles[i], duration_ms,NULL);
 
     return gid;
 }
@@ -243,7 +241,7 @@ uint32_t motion_sync_move_pwm(const uint8_t            servo_ids[],
     sync_group_t* g = find_group(gid);
     if (g) g->cb = cb;
 
-    for (uint8_t i = 0; i < count; i++) servo_move_pwm(servo_ids[i], pwms[i], duration_ms);
+    for (uint8_t i = 0; i < count; i++) servo_move_pwm(servo_ids[i], pwms[i], duration_ms,NULL);
 
     return gid;
 }

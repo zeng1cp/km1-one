@@ -18,10 +18,11 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+
 #include "dma.h"
+#include "gpio.h"
 #include "tim.h"
 #include "usart.h"
-#include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -32,9 +33,10 @@
 #include "motion_cycle.h"
 #include "motion_engine.h"
 #include "motion_sync.h"
+#include "protocol.h"
 #include "servo_hal.h"
-#include "uart_driver.h"
 #include "tf_uart_port.h"
+#include "uart_driver.h"
 
 /* USER CODE END Includes */
 
@@ -75,151 +77,168 @@ void SystemClock_Config(void);
 
 int32_t idx1, idx2;
 
-#define TEST_CYCLE_1 0
+#define TEST_CYCLE_1 1
 
 #if TEST_CYCLE_1
 static const uint8_t  servo_ids[] = {1, 2, 3};
 static const uint32_t pose_a[]    = {810, 1850, 1230};
 static const uint32_t pose_b[]    = {1180, 1970, 1000};
 
-static uint32_t* poses[]     = {pose_a, pose_b};
-static uint32_t  durations[] = {1500, 1500};
+static uint32_t*      poses[]     = {pose_a, pose_b};
+static const uint32_t durations[] = {1500, 1500};
 
 void start_pose_loop(void)
 {
-    idx1 = motion_cycle_create(servo_ids,
-                               3,
-                               poses,
-                               NULL,
-                               durations,
-                               2,
-                               0  // 无限循环
-    );
+    // 创建配置结构
+    motion_cycle_config_t config1 = {
+        .servo_ids     = servo_ids,
+        .servo_count   = 3,
+        .pose_list_pwm = poses,  // PWM模式
+        .pose_duration = durations,
+        .pose_count    = 2,
+        .max_loops     = 0,    // 0表示无限循环
+        .mode          = 0,    // PWM模式
+        .user_data     = NULL  // 测试程序不需要额外数据
+    };
 
-    motion_cycle_start(idx1);
+    idx1 = motion_cycle_create(&config1, NULL);
+
+    if (idx1 >= 0) {
+        motion_cycle_start(idx1);
+        printf("Test cycle 1 started, index=%d\n", idx1);
+    } else {
+        printf("Failed to create test cycle 1\n");
+    }
 }
 
 static const uint8_t  servo_ids1[] = {4};
 static const uint32_t pose_a1[]    = {500};
 static const uint32_t pose_b1[]    = {2500};
 
-static uint32_t* poses1[]     = {pose_a1, pose_b1};
-static uint32_t  durations1[] = {4000, 4000};
+static uint32_t*      poses1[]     = {pose_a1, pose_b1};
+static const uint32_t durations1[] = {4000, 4000};
 
 void start_pose_loop1(void)
 {
-    idx2 = motion_cycle_create(servo_ids1,
-                               1,
-                               poses1,
-                               NULL,
-                               durations1,
-                               2,
-                               0  // 无限循环
-    );
+    // 创建配置结构
+    motion_cycle_config_t config2 = {
+        .servo_ids     = servo_ids1,
+        .servo_count   = 1,
+        .pose_list_pwm = poses1,  // PWM模式
+        .pose_duration = durations1,
+        .pose_count    = 2,
+        .max_loops     = 0,    // 0表示无限循环
+        .mode          = 0,    // PWM模式
+        .user_data     = NULL  // 测试程序不需要额外数据
+    };
 
-    motion_cycle_start(idx2);
+    idx2 = motion_cycle_create(&config2, NULL);
+
+    if (idx2 >= 0) {
+        motion_cycle_start(idx2);
+        printf("Test cycle 2 started, index=%d\n", idx2);
+    } else {
+        printf("Failed to create test cycle 2\n");
+    }
 }
 #endif
 /* USER CODE END 0 */
 
 /**
-  * @brief  The application entry point.
-  * @retval int
-  */
+ * @brief  The application entry point.
+ * @retval int
+ */
 int main(void)
 {
+    /* USER CODE BEGIN 1 */
 
-  /* USER CODE BEGIN 1 */
+    /* USER CODE END 1 */
 
-  /* USER CODE END 1 */
+    /* MCU Configuration--------------------------------------------------------*/
 
-  /* MCU Configuration--------------------------------------------------------*/
+    /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+    HAL_Init();
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+    /* USER CODE BEGIN Init */
 
-  /* USER CODE BEGIN Init */
+    /* USER CODE END Init */
 
-  /* USER CODE END Init */
+    /* Configure the system clock */
+    SystemClock_Config();
 
-  /* Configure the system clock */
-  SystemClock_Config();
+    /* USER CODE BEGIN SysInit */
+    /* USER CODE END SysInit */
 
-  /* USER CODE BEGIN SysInit */
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_DMA_Init();
-  MX_TIM1_Init();
-  MX_TIM2_Init();
-  MX_TIM3_Init();
-  MX_TIM4_Init();
-  MX_USART1_UART_Init();
-  MX_USART3_UART_Init();
-  /* USER CODE BEGIN 2 */
+    /* Initialize all configured peripherals */
+    MX_GPIO_Init();
+    MX_DMA_Init();
+    MX_TIM1_Init();
+    MX_TIM2_Init();
+    MX_TIM3_Init();
+    MX_TIM4_Init();
+    MX_USART1_UART_Init();
+    MX_USART3_UART_Init();
+    /* USER CODE BEGIN 2 */
     HAL_TIM_Base_Start_IT(&htim1);  // 启动带中断的定时�?
 
     servo_hal_init();
     servo_motion_init();
     motion_sync_init();
     tf_uart_port_init(NULL);
-
+    protocol_init();
 #if TEST_CYCLE_1
     servo_hal_set_pwm(0, 1500);
     start_pose_loop();
     start_pose_loop1();
 #endif
-  /* USER CODE END 2 */
+    /* USER CODE END 2 */
 
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
+    /* Infinite loop */
+    /* USER CODE BEGIN WHILE */
     while (1) {
-      tf_uart_port_poll();
-    /* USER CODE END WHILE */
+        tf_uart_port_poll();
+        /* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
+        /* USER CODE BEGIN 3 */
     }
-  /* USER CODE END 3 */
+    /* USER CODE END 3 */
 }
 
 /**
-  * @brief System Clock Configuration
-  * @retval None
-  */
+ * @brief System Clock Configuration
+ * @retval None
+ */
 void SystemClock_Config(void)
 {
-  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+    RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+    RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-  /** Initializes the RCC Oscillators according to the specified parameters
-  * in the RCC_OscInitTypeDef structure.
-  */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-  RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
+    /** Initializes the RCC Oscillators according to the specified parameters
+     * in the RCC_OscInitTypeDef structure.
+     */
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+    RCC_OscInitStruct.HSEState       = RCC_HSE_ON;
+    RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
+    RCC_OscInitStruct.HSIState       = RCC_HSI_ON;
+    RCC_OscInitStruct.PLL.PLLState   = RCC_PLL_ON;
+    RCC_OscInitStruct.PLL.PLLSource  = RCC_PLLSOURCE_HSE;
+    RCC_OscInitStruct.PLL.PLLMUL     = RCC_PLL_MUL9;
+    if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
+        Error_Handler();
+    }
 
-  /** Initializes the CPU, AHB and APB buses clocks
-  */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+    /** Initializes the CPU, AHB and APB buses clocks
+     */
+    RCC_ClkInitStruct.ClockType =
+        RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+    RCC_ClkInitStruct.SYSCLKSource   = RCC_SYSCLKSOURCE_PLLCLK;
+    RCC_ClkInitStruct.AHBCLKDivider  = RCC_SYSCLK_DIV1;
+    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+    RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
-  {
-    Error_Handler();
-  }
+    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK) {
+        Error_Handler();
+    }
 }
 
 /* USER CODE BEGIN 4 */
@@ -252,16 +271,16 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
         if (now - last_press_time1 > 50) {
             last_press_time1 = now;
             button1_flag     = 1;
-            motion_cycle_pause(idx1);
-            motion_cycle_restart(idx2);
+            motion_cycle_release(idx1);
+            motion_cycle_release(idx2);
             uart_driver_send("send with block\n", 17);
         }
     } else if (GPIO_Pin == GPIO_PIN_11) {
         if (now - last_press_time2 > 50) {
             last_press_time2 = now;
             button2_flag     = 1;
-            motion_cycle_pause(idx2);
-            motion_cycle_restart(idx1);
+            motion_cycle_release(idx2);
+            motion_cycle_release(idx1);
             uart_driver_send_async("send with unblock\n", 19);
         }
     }
@@ -269,32 +288,32 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 /* USER CODE END 4 */
 
 /**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
-  */
+ * @brief  This function is executed in case of error occurrence.
+ * @retval None
+ */
 void Error_Handler(void)
 {
-  /* USER CODE BEGIN Error_Handler_Debug */
+    /* USER CODE BEGIN Error_Handler_Debug */
     /* User can add his own implementation to report the HAL error return state */
     __disable_irq();
     while (1) {}
-  /* USER CODE END Error_Handler_Debug */
+    /* USER CODE END Error_Handler_Debug */
 }
 
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_param error line source number
-  * @retval None
-  */
-void assert_failed(uint8_t *file, uint32_t line)
+ * @brief  Reports the name of the source file and the source line number
+ *         where the assert_param error has occurred.
+ * @param  file: pointer to the source file name
+ * @param  line: assert_param error line source number
+ * @retval None
+ */
+void assert_failed(uint8_t* file, uint32_t line)
 {
-  /* USER CODE BEGIN 6 */
+    /* USER CODE BEGIN 6 */
     /* User can add his own implementation to report the file name and line
        number, ex: printf("Wrong parameters value: file %s on line %d\r\n", file,
        line) */
-  /* USER CODE END 6 */
+    /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */

@@ -37,7 +37,6 @@ typedef struct {
 void    servo_motion_init(void);
 void    servo_motion_set_params(uint8_t id, const servo_t* params);
 servo_t servo_motion_get_params(uint8_t id);
-void    servo_motion_set_complete_callback(uint8_t id, servo_motion_complete_cb_t callback);
 void    servo_motion_set_global_complete_callback(servo_motion_complete_cb_t callback);
 
 // ==================== 角度-PWM转换 ====================
@@ -45,21 +44,23 @@ uint32_t angle_to_pwm(uint8_t id, float angle_deg);
 float    pwm_to_angle(uint8_t id, uint32_t pwm_us);
 
 // ==================== 运动控制 ====================
-void servo_move_angle(uint8_t id, float angle_deg, uint32_t duration_ms);
-void servo_move_pwm(uint8_t id, uint32_t pwm_us, uint32_t duration_ms);
-void servo_move_relative(uint8_t id, float delta_deg, uint32_t duration_ms);
-void servo_move_home(uint8_t id, uint32_t duration_ms);
+void servo_move_angle(uint8_t id, float angle_deg, uint32_t duration_ms, servo_motion_complete_cb_t cb);
+void servo_move_pwm(uint8_t id, uint32_t pwm_us, uint32_t duration_ms, servo_motion_complete_cb_t cb);
+void servo_move_relative(uint8_t id, float delta_deg, uint32_t duration_ms, servo_motion_complete_cb_t cb);
+void servo_move_home(uint8_t id, uint32_t duration_ms, servo_motion_complete_cb_t cb);
 void servo_sync_to_hardware(void);
 
 // ==================== 多舵机控制 ====================
 void servo_move_angle_multiple(const uint8_t ids[],
                                const float   angles[],
                                uint8_t       count,
-                               uint32_t      duration_ms);
+                               uint32_t      duration_ms,
+                               servo_motion_complete_cb_t cb);
 void servo_move_pwm_multiple(const uint8_t  ids[],
                              const uint32_t pwms[],
                              uint8_t        count,
-                             uint32_t       duration_ms);
+                             uint32_t       duration_ms,
+                             servo_motion_complete_cb_t cb);
 // ==================== 状态控制 ====================
 void servo_stop(uint8_t id);
 void servo_pause(uint8_t id);
