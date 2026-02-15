@@ -2,6 +2,7 @@
 
 #include "motion_engine.h"
 #include "protocol.h"
+#include "servo_codec.h"
 #include "tinyframe/TinyFrame.h"
 
 #ifndef SERVO_LISTENER_LOG_ENABLE
@@ -25,6 +26,25 @@
 
 static uint32_t s_servo_notify_mask = 0;
 
+static bool protocol_send_servo_status(uint8_t subcmd, uint8_t id)
+{
+    uint8_t resp_buf[18];
+    proto_servo_status_resp_t resp = {
+        .subcmd = subcmd,
+        .servo_id = id,
+        .moving = (uint8_t)(servo_is_moving(id) ? 1U : 0U),
+        .current_pwm = servo_get_current_pwm(id),
+        .target_angle = servo_get_target_angle(id),
+        .remaining_time = servo_get_remaining_time(id),
+    };
+
+    uint16_t resp_len = proto_encode_servo_status_resp(&resp, resp_buf, (uint16_t)sizeof(resp_buf));
+    if (resp_len == 0U) {
+        return false;
+    }
+    return protocol_send_state(STATE_CMD_SERVO, resp_buf, resp_len);
+}
+
 static void protocol_servo_complete_cb(uint8_t id)
 {
     if (id >= MAX_SERVOS) {
@@ -35,15 +55,7 @@ static void protocol_servo_complete_cb(uint8_t id)
     }
 
     s_servo_notify_mask &= ~(1U << id);
-
-    uint8_t resp[18];
-    resp[0] = (uint8_t)SERVO_CMD_STATUS;
-    proto_write_u32_le(resp, 1, id);
-    resp[5] = (uint8_t)(servo_is_moving(id) ? 1 : 0);
-    proto_write_u32_le(resp, 6, servo_get_current_pwm(id));
-    proto_write_f32_le(resp, 10, servo_get_target_angle(id));
-    proto_write_u32_le(resp, 14, servo_get_remaining_time(id));
-    protocol_send_state(STATE_CMD_SERVO, resp, (uint16_t)sizeof(resp));
+    (void)protocol_send_servo_status((uint8_t)SERVO_CMD_STATUS, id);
 }
 
 TF_Result protocol_servo_listener(TinyFrame* tf, TF_Msg* msg)
@@ -91,74 +103,65 @@ bool protocol_servo_handle(uint8_t cmd, const uint8_t* payload, uint16_t len)
         case SERVO_CMD_SET_PWM: {
             SERVO_LOG("CMD SET_PWM");
             SERVO_DUMP("payload", payload, len);
-            if (len != 9) {
+            proto_servo_set_pwm_req_t req;
+            if (!proto_decode_servo_set_pwm_req(payload, len, &req)) {
                 return false;
             }
-            uint8_t  id       = payload[0];
-            uint32_t pwm      = 0;
-            uint32_t duration = 0;
-            if (id >= MAX_SERVOS) {
-                return false;
-            }
-            if (!proto_read_u32_le(payload, len, 1, &pwm)) {
-                return false;
-            }
-            if (!proto_read_u32_le(payload, len, 5, &duration)) {
+            if (req.id >= MAX_SERVOS) {
                 return false;
             }
             SERVO_LOG("id=%u pwm=%lu duration=%lu",
-                      (unsigned)id,
-                      (unsigned long)pwm,
-                      (unsigned long)duration);
-            servo_move_pwm(id, pwm, duration, protocol_servo_complete_cb);
-            s_servo_notify_mask |= (1U << id);
+                      (unsigned)req.id,
+                      (unsigned long)req.pwm,
+                      (unsigned long)req.duration_ms);
+            servo_move_pwm(req.id, req.pwm, req.duration_ms, protocol_servo_complete_cb);
+            s_servo_notify_mask |= (1U << req.id);
             return true;
         }
         case SERVO_CMD_SET_POS: {
             SERVO_LOG("CMD SET_POS");
             SERVO_DUMP("payload", payload, len);
-            if (len != 9) {
+            proto_servo_set_pos_req_t req;
+            if (!proto_decode_servo_set_pos_req(payload, len, &req)) {
                 return false;
             }
-            uint8_t  id       = payload[0];
-            float    angle    = 0.0f;
-            uint32_t duration = 0;
-            if (id >= MAX_SERVOS) {
-                return false;
-            }
-            if (!proto_read_f32_le(payload, len, 1, &angle)) {
-                return false;
-            }
-            if (!proto_read_u32_le(payload, len, 5, &duration)) {
+            if (req.id >= MAX_SERVOS) {
                 return false;
             }
             SERVO_LOG("id=%u angle=%.3f duration=%lu",
-                      (unsigned)id,
-                      (double)angle,
-                      (unsigned long)duration);
-            servo_move_angle(id, angle, duration, protocol_servo_complete_cb);
-            s_servo_notify_mask |= (1U << id);
+                      (unsigned)req.id,
+                      (double)req.angle,
+                      (unsigned long)req.duration_ms);
+            servo_move_angle(req.id, req.angle, req.duration_ms, protocol_servo_complete_cb);
+            s_servo_notify_mask |= (1U << req.id);
+            return true;
+        }
+        case SERVO_CMD_HOME: {
+            SERVO_LOG("CMD HOME");
+            SERVO_DUMP("payload", payload, len);
+            proto_servo_home_req_t req;
+            if (!proto_decode_servo_home_req(payload, len, &req)) {
+                return false;
+            }
+
+            for (uint8_t i = 0; i < MAX_SERVOS; ++i) {
+                servo_move_home(i, req.duration_ms, protocol_servo_complete_cb);
+                s_servo_notify_mask |= (1U << i);
+            }
             return true;
         }
         case SERVO_CMD_GET_STATUS: {
             SERVO_LOG("CMD GET_STATUS");
             SERVO_DUMP("payload", payload, len);
-            if (len != 1) {
+            uint8_t id = 0;
+            if (!proto_decode_servo_id_req(payload, len, &id)) {
                 return false;
             }
-            uint8_t id = payload[0];
             if (id >= MAX_SERVOS) {
                 return false;
             }
             SERVO_LOG("id=%u", (unsigned)id);
-            uint8_t resp[18];
-            resp[0] = (uint8_t)SERVO_CMD_GET_STATUS;
-            proto_write_u32_le(resp, 1, id);
-            resp[5] = (uint8_t)(servo_is_moving(id) ? 1 : 0);
-            proto_write_u32_le(resp, 6, servo_get_current_pwm(id));
-            proto_write_f32_le(resp, 10, servo_get_target_angle(id));
-            proto_write_u32_le(resp, 14, servo_get_remaining_time(id));
-            return protocol_send_state(STATE_CMD_SERVO, resp, (uint16_t)sizeof(resp));
+            return protocol_send_servo_status((uint8_t)SERVO_CMD_GET_STATUS, id);
         }
         case SERVO_CMD_STATUS:
             SERVO_LOG("CMD STATUS");

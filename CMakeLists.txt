@@ -77,6 +77,11 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     User/comm/protocol/listener/arm_listener.c
     User/comm/protocol/listener/config_listener.c
 
+    User/comm/protocol/codec/arm_codec.c
+    User/comm/protocol/codec/motion_codec.c
+    User/comm/protocol/codec/protocol_codec.c
+    User/comm/protocol/codec/servo_codec.c
+
     ### comm - drivers 驱动
     User/comm/drivers/uart_driver.c
     
@@ -91,6 +96,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     
     ### comm - utils 工具（可选）
     # User/comm/utils/debug_output.c
+
 )
 
 # Add include paths
@@ -111,6 +117,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     
     ### comm - 协议定义
     User/comm/protocol
+    User/comm/protocol/codec
     
     ### comm - 驱动层
     User/comm/drivers

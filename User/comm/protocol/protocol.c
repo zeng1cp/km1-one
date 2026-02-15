@@ -9,7 +9,6 @@ extern TF_Result protocol_servo_listener(TinyFrame* tf, TF_Msg* msg);
 extern TF_Result protocol_motion_listener(TinyFrame* tf, TF_Msg* msg);
 extern TF_Result protocol_arm_listener(TinyFrame* tf, TF_Msg* msg);
 extern TF_Result protocol_config_listener(TinyFrame* tf, TF_Msg* msg);
-extern TF_Result protocol_motion_cycle_listener(TinyFrame* tf, TF_Msg* msg);
 
 bool protocol_init(void)
 {
@@ -25,6 +24,5 @@ bool protocol_init(void)
     ok &= TF_AddTypeListener(tf, PROTO_TYPE_ARM, protocol_arm_listener);
     ok &= TF_AddTypeListener(tf, PROTO_TYPE_CONFIG, protocol_config_listener);
 
-    // protocol_motion_init();
     return ok;
 }

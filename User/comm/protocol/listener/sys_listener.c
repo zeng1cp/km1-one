@@ -26,15 +26,13 @@ bool protocol_sys_handle(uint8_t cmd, const uint8_t* payload, uint16_t len)
     // Payload format: [cmd][payload...]
     switch (cmd) {
         case SYS_CMD_PING: {
-            uint8_t buf[1 + PROTO_MAX_PAYLOAD];
-            if (len > PROTO_MAX_PAYLOAD) {
+            uint8_t  frame[1U + PROTO_MAX_PAYLOAD];
+            uint16_t frame_len = 0U;
+            if (!proto_encode_cmd_frame(
+                    (uint8_t)SYS_CMD_PONG, payload, len, frame, (uint16_t)sizeof(frame), &frame_len)) {
                 return false;
             }
-            buf[0] = SYS_CMD_PONG;
-            for (uint16_t i = 0; i < len; ++i) {
-                buf[1 + i] = payload[i];
-            }
-            return tf_uart_port_send_frame(PROTO_TYPE_SYS, buf, (uint16_t)(1 + len));
+            return tf_uart_port_send_frame(PROTO_TYPE_SYS, frame, frame_len);
         }
         case SYS_CMD_PONG:
             return true;
@@ -46,15 +44,25 @@ bool protocol_sys_handle(uint8_t cmd, const uint8_t* payload, uint16_t len)
             while (name[name_len] != '\0' && name_len < (uint8_t)(PROTO_MAX_PAYLOAD - 3)) {
                 name_len++;
             }
-            uint8_t buf[1 + 3 + PROTO_MAX_PAYLOAD];
-            buf[0] = SYS_CMD_INFO;
-            buf[1] = (uint8_t)PROTO_VERSION_MAJOR;
-            buf[2] = (uint8_t)PROTO_VERSION_MINOR;
-            buf[3] = name_len;
+            uint8_t payload_buf[3 + PROTO_MAX_PAYLOAD];
+            uint8_t frame[1U + PROTO_MAX_PAYLOAD];
+            payload_buf[0] = (uint8_t)PROTO_VERSION_MAJOR;
+            payload_buf[1] = (uint8_t)PROTO_VERSION_MINOR;
+            payload_buf[2] = name_len;
             for (uint8_t i = 0; i < name_len; ++i) {
-                buf[4 + i] = (uint8_t)name[i];
+                payload_buf[3 + i] = (uint8_t)name[i];
             }
-            return tf_uart_port_send_frame(PROTO_TYPE_SYS, buf, (uint16_t)(4 + name_len));
+
+            uint16_t frame_len = 0U;
+            if (!proto_encode_cmd_frame((uint8_t)SYS_CMD_INFO,
+                                        payload_buf,
+                                        (uint16_t)(3U + name_len),
+                                        frame,
+                                        (uint16_t)sizeof(frame),
+                                        &frame_len)) {
+                return false;
+            }
+            return tf_uart_port_send_frame(PROTO_TYPE_SYS, frame, frame_len);
         }
         case SYS_CMD_INFO:
             return true;

@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <string.h>
+#include "protocol_codec.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,6 +46,7 @@ typedef enum {
     SERVO_CMD_SET_POS    = 0x04,
     SERVO_CMD_GET_STATUS = 0x05,
     SERVO_CMD_STATUS     = 0x06,
+    SERVO_CMD_HOME       = 0x07,
 } proto_servo_cmd_t;
 
 // MOTION commands
@@ -93,86 +94,6 @@ typedef enum {
     STATE_CMD_ARM          = 0x04,
     STATE_CMD_CONFIG       = 0x05,
 } proto_state_cmd_t;
-
-typedef struct {
-    uint8_t        cmd;
-    const uint8_t* payload;
-    uint16_t       payload_len;
-} proto_cmd_view_t;
-
-static inline bool proto_parse_cmd(const uint8_t* data, uint16_t len, proto_cmd_view_t* out)
-{
-    if (out == NULL) {
-        return false;
-    }
-    if (data == NULL || len < 1) {
-        out->cmd         = 0;
-        out->payload     = NULL;
-        out->payload_len = 0;
-        return false;
-    }
-    out->cmd         = data[0];
-    out->payload     = &data[1];
-    out->payload_len = (uint16_t)(len - 1);
-    return true;
-}
-
-// Little-endian helpers (protocol payload uses LE encoding)
-static inline bool proto_read_u16_le(const uint8_t* data, uint16_t len, uint16_t off, uint16_t* out)
-{
-    if (data == NULL || out == NULL) {
-        return false;
-    }
-    if ((uint32_t)off + 2U > len) {
-        return false;
-    }
-    *out = (uint16_t)data[off] | (uint16_t)((uint16_t)data[off + 1] << 8);
-    return true;
-}
-
-static inline bool proto_read_u32_le(const uint8_t* data, uint16_t len, uint16_t off, uint32_t* out)
-{
-    if (data == NULL || out == NULL) {
-        return false;
-    }
-    if ((uint32_t)off + 4U > len) {
-        return false;
-    }
-    *out = (uint32_t)data[off] | ((uint32_t)data[off + 1] << 8) | ((uint32_t)data[off + 2] << 16)
-         | ((uint32_t)data[off + 3] << 24);
-    return true;
-}
-
-static inline bool proto_read_f32_le(const uint8_t* data, uint16_t len, uint16_t off, float* out)
-{
-    uint32_t raw = 0;
-    if (out == NULL) {
-        return false;
-    }
-    if (!proto_read_u32_le(data, len, off, &raw)) {
-        return false;
-    }
-    // IEEE754 little-endian
-    float f;
-    memcpy(&f, &raw, sizeof(float));
-    *out = f;
-    return true;
-}
-
-static inline void proto_write_u32_le(uint8_t* data, uint16_t off, uint32_t value)
-{
-    data[off + 0] = (uint8_t)(value & 0xFF);
-    data[off + 1] = (uint8_t)((value >> 8) & 0xFF);
-    data[off + 2] = (uint8_t)((value >> 16) & 0xFF);
-    data[off + 3] = (uint8_t)((value >> 24) & 0xFF);
-}
-
-static inline void proto_write_f32_le(uint8_t* data, uint16_t off, float value)
-{
-    uint32_t raw = 0;
-    memcpy(&raw, &value, sizeof(float));
-    proto_write_u32_le(data, off, raw);
-}
 
 // Listener entry points
 bool protocol_sys_handle(uint8_t cmd, const uint8_t* payload, uint16_t len);

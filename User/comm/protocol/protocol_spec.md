@@ -16,7 +16,6 @@ All multi-byte numbers in payload are **little-endian (LE)**.
 - `PROTO_TYPE_SERVO  (0x10)`
 - `PROTO_TYPE_MOTION (0x11)`
 - `PROTO_TYPE_ARM    (0x12)`
-- `PROTO_TYPE_MOTION_CYCLE (0x13)`
 - `PROTO_TYPE_STATE  (0xD0)` device -> host
 - `PROTO_TYPE_CONFIG (0xE0)`
 - `PROTO_TYPE_DEBUG  (0xF0)`
@@ -43,6 +42,7 @@ Commands:
 - `SERVO_CMD_SET_POS (0x04)`: `[id:u8][angle_deg:f32][duration_ms:u32]`
 - `SERVO_CMD_GET_STATUS (0x05)`: `[id:u8]`
 - `SERVO_CMD_STATUS (0x06)`: (completion/status)
+- `SERVO_CMD_HOME (0x07)`: no payload, one-click home all servos with default `duration_ms=1000`
 
 State response (`STATE_CMD_SERVO` payload):
 - `GET_STATUS` response: `[subcmd:u8][id:u32][moving:u8][current_pwm:u32][target_angle_deg:f32][remaining_ms:u32]`
@@ -79,7 +79,7 @@ State response (`STATE_CMD_MOTION` payload):
 - `START` response: `[subcmd:u8][group_id:u32]`
 - `GET_STATUS` response: `[subcmd:u8][group_id:u32][mask:u32][complete:u8]`
 - `STATUS` (motion complete): `[subcmd:u8][group_id:u32][complete:u8]`
-- `CYCLE_CREATE` response: `[subcmd:u8][cycle_index:u32]`
+- `CYCLE_CREATE` response: same as `CYCLE_LIST` response (full cycle snapshot)
 - `CYCLE_GET_STATUS` response:
   - `[subcmd:u8][cycle_index:u32][active:u8][running:u8][current_pose:u8][pose_count:u8]`
   - `[loop_count:u32][max_loops:u32][active_group_id:u32]`
@@ -89,7 +89,7 @@ State response (`STATE_CMD_MOTION` payload):
   - `[subcmd:u8][count:u8][cycle_info * count]`
   - where each `cycle_info` is:
     - `[index:u8][active:u8][running:u8][current_pose:u8][pose_count:u8][loop_count:u32][max_loops:u32][active_group_id:u32]`
-  - `count` is the number of valid cycles (0-5)
+  - `count` is the number of valid cycles (`0..MAX_CYCLE`, currently `0..6`)
   - All multi-byte fields are little-endian
 
 ## ARM (type 0x12)

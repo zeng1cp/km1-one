@@ -10,8 +10,8 @@
 // ==================== Static State ====================
 static TinyFrame tf_instance;  // TinyFrame instance
 
-static tf_uart_frame_callback_t user_callback = NULL;  // User callback
-static bool tf_uart_inited = false;
+static tf_uart_frame_callback_t user_callback  = NULL;  // User callback
+static bool                     tf_uart_inited = false;
 
 #ifndef TF_UART_PORT_LOG_ENABLE
 #define TF_UART_PORT_LOG_ENABLE 1
@@ -40,8 +40,11 @@ void TF_WriteImpl(TinyFrame* tf, const uint8_t* buff, uint32_t len)
         TF_UART_LOG("UART send failed");
     } else {
         // TF_UART_LOG("UART send success");
-        //dumpFrame(buff, len);
+        // dumpFrame(buff, len);
     }
+    // if (uart_driver_send(buff, len) == -1) {
+    //     TF_UART_LOG("UART send failed");
+    // }
 }
 
 /**

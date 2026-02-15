@@ -77,7 +77,7 @@ void SystemClock_Config(void);
 
 int32_t idx1, idx2;
 
-#define TEST_CYCLE_1 1
+#define TEST_CYCLE_1 0
 
 #if TEST_CYCLE_1
 static const uint8_t  servo_ids[] = {1, 2, 3};

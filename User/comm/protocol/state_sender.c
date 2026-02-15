@@ -3,22 +3,11 @@
 
 bool protocol_send_state(uint8_t cmd, const uint8_t* payload, uint16_t len)
 {
-    if (len > PROTO_MAX_PAYLOAD) {
+    uint8_t  frame[1U + PROTO_MAX_PAYLOAD];
+    uint16_t frame_len = 0U;
+
+    if (!proto_encode_cmd_frame(cmd, payload, len, frame, (uint16_t)sizeof(frame), &frame_len)) {
         return false;
     }
-
-    if (payload == NULL || len == 0) {
-        uint8_t buf[1];
-        buf[0] = cmd;
-        return tf_uart_port_send_frame(PROTO_TYPE_STATE, buf, 1);
-    }
-
-    // Payload format: [cmd][payload...]
-    uint8_t buf[1 + len];
-    buf[0] = cmd;
-    for (uint16_t i = 0; i < len; ++i) {
-        buf[1 + i] = payload[i];
-    }
-
-    return tf_uart_port_send_frame(PROTO_TYPE_STATE, buf, (uint16_t)(1 + len));
+    return tf_uart_port_send_frame(PROTO_TYPE_STATE, frame, frame_len);
 }
