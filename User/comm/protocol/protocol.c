@@ -7,6 +7,7 @@
 extern TF_Result protocol_sys_listener(TinyFrame* tf, TF_Msg* msg);
 extern TF_Result protocol_servo_listener(TinyFrame* tf, TF_Msg* msg);
 extern TF_Result protocol_motion_listener(TinyFrame* tf, TF_Msg* msg);
+extern TF_Result protocol_cycle_listener(TinyFrame* tf, TF_Msg* msg);
 extern TF_Result protocol_arm_listener(TinyFrame* tf, TF_Msg* msg);
 extern TF_Result protocol_config_listener(TinyFrame* tf, TF_Msg* msg);
 
@@ -21,6 +22,7 @@ bool protocol_init(void)
     ok &= TF_AddTypeListener(tf, PROTO_TYPE_SYS, protocol_sys_listener);
     ok &= TF_AddTypeListener(tf, PROTO_TYPE_SERVO, protocol_servo_listener);
     ok &= TF_AddTypeListener(tf, PROTO_TYPE_MOTION, protocol_motion_listener);
+    ok &= TF_AddTypeListener(tf, PROTO_TYPE_CYCLE, protocol_cycle_listener);
     ok &= TF_AddTypeListener(tf, PROTO_TYPE_ARM, protocol_arm_listener);
     ok &= TF_AddTypeListener(tf, PROTO_TYPE_CONFIG, protocol_config_listener);
 

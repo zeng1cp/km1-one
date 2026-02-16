@@ -15,7 +15,8 @@ All multi-byte numbers in payload are **little-endian (LE)**.
 - `PROTO_TYPE_SYS    (0x01)`
 - `PROTO_TYPE_SERVO  (0x10)`
 - `PROTO_TYPE_MOTION (0x11)`
-- `PROTO_TYPE_ARM    (0x12)`
+- `PROTO_TYPE_CYCLE  (0x12)`
+- `PROTO_TYPE_ARM    (0x13)`
 - `PROTO_TYPE_STATE  (0xD0)` device -> host
 - `PROTO_TYPE_CONFIG (0xE0)`
 - `PROTO_TYPE_DEBUG  (0xF0)`
@@ -61,38 +62,44 @@ Commands:
 - `MOTION_CMD_SET_PLAN (0x05)`: (reserved)
 - `MOTION_CMD_GET_STATUS (0x06)`: `[group_id:u32]`
 - `MOTION_CMD_STATUS (0x07)`: (reserved)
-- `MOTION_CMD_CYCLE_CREATE (0x10)`:
-  - payload: `[mode:u8][servo_count:u8][pose_count:u8][max_loops:u32]`
-  - then: `[durations_ms:u32 * pose_count][ids:u8 * servo_count]`
-  - then: `[values:pose_count * servo_count * 4]`
-  - `mode=0`: values are `u32 pwm`
-  - `mode=1`: values are `f32 angle_deg`
-- `MOTION_CMD_CYCLE_START (0x11)`: `[cycle_index:u32]`
-- `MOTION_CMD_CYCLE_RESTART (0x12)`: `[cycle_index:u32]`
-- `MOTION_CMD_CYCLE_PAUSE (0x13)`: `[cycle_index:u32]`
-- `MOTION_CMD_CYCLE_RELEASE (0x14)`: `[cycle_index:u32]`
-- `MOTION_CMD_CYCLE_GET_STATUS (0x15)`: `[cycle_index:u32]`
-- `MOTION_CMD_CYCLE_STATUS (0x16)`: response payload below
-- `MOTION_CMD_CYCLE_LIST (0x17)`: no payload, returns all existing cycles and their status
 
 State response (`STATE_CMD_MOTION` payload):
 - `START` response: `[subcmd:u8][group_id:u32]`
 - `GET_STATUS` response: `[subcmd:u8][group_id:u32][mask:u32][complete:u8]`
 - `STATUS` (motion complete): `[subcmd:u8][group_id:u32][complete:u8]`
-- `CYCLE_CREATE` response: same as `CYCLE_LIST` response (full cycle snapshot)
-- `CYCLE_GET_STATUS` response:
-  - `[subcmd:u8][cycle_index:u32][active:u8][running:u8][current_pose:u8][pose_count:u8]`
-  - `[loop_count:u32][max_loops:u32][active_group_id:u32]`
- - `CYCLE_STATUS` (loop/finish):
-  - `[subcmd:u8][cycle_index:u32][loop_count:u32][remaining:u32][finished:u8]`
- - `CYCLE_LIST` response:
-  - `[subcmd:u8][count:u8][cycle_info * count]`
-  - where each `cycle_info` is:
-    - `[index:u8][active:u8][running:u8][current_pose:u8][pose_count:u8][loop_count:u32][max_loops:u32][active_group_id:u32]`
-  - `count` is the number of valid cycles (`0..MAX_CYCLE`, currently `0..6`)
-  - All multi-byte fields are little-endian
 
-## ARM (type 0x12)
+## CYCLE (type 0x12)
+
+Commands:
+- `CYCLE_CMD_CREATE (0x00)`: payload format below
+- `CYCLE_CMD_START (0x01)`: `[cycle_index:u32]`
+- `CYCLE_CMD_RESTART (0x02)`: `[cycle_index:u32]`
+- `CYCLE_CMD_PAUSE (0x03)`: `[cycle_index:u32]`
+- `CYCLE_CMD_RELEASE (0x04)`: `[cycle_index:u32]`
+- `CYCLE_CMD_GET_STATUS (0x05)`: `[cycle_index:u32]`
+- `CYCLE_CMD_STATUS (0x06)`: (device -> host only) payload format below
+- `CYCLE_CMD_LIST (0x07)`: no payload
+
+`CYCLE_CMD_CREATE` payload:
+- `[mode:u8][servo_count:u8][pose_count:u8][max_loops:u32]`
+- then: `[durations_ms:u32 * pose_count][ids:u8 * servo_count]`
+- then: `[values:pose_count * servo_count * 4]`
+- `mode=0`: values are `u32 pwm`
+- `mode=1`: values are `f32 angle_deg`
+
+State response (`STATE_CMD_CYCLE` payload):
+- For `CYCLE_CMD_LIST` response:
+  - `[subcmd:u8 = 0x07][count:u8][cycle_info * count]`
+  - each `cycle_info`:
+    - `[index:u8][active:u8][running:u8][current_pose:u8][pose_count:u8]`
+    - `[loop_count:u32][max_loops:u32][active_group_id:u32]`
+- For `CYCLE_CMD_GET_STATUS` response:
+  - `[subcmd:u8 = 0x05][cycle_index:u32][active:u8][running:u8][current_pose:u8][pose_count:u8]`
+  - `[loop_count:u32][max_loops:u32][active_group_id:u32]`
+- For `CYCLE_CMD_STATUS` (status update):
+  - `[subcmd:u8 = 0x06][cycle_index:u32][loop_count:u32][remaining:u32][finished:u8]`
+
+## ARM (type 0x13)
 
 Commands:
 - `ARM_CMD_HOME (0x01)`: optional `[duration_ms:u32]` (default 1000)

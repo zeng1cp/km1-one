@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+
 #include "protocol_codec.h"
 
 #ifdef __cplusplus
@@ -19,13 +20,14 @@ extern "C" {
 
 // Protocol frame types (TinyFrame msg->type)
 typedef enum {
-    PROTO_TYPE_SYS          = 0x01,
-    PROTO_TYPE_SERVO        = 0x10,
-    PROTO_TYPE_MOTION       = 0x11,
-    PROTO_TYPE_ARM          = 0x12,
-    PROTO_TYPE_STATE        = 0xD0,
-    PROTO_TYPE_CONFIG       = 0xE0,
-    PROTO_TYPE_DEBUG        = 0xF0,
+    PROTO_TYPE_SYS    = 0x01,
+    PROTO_TYPE_SERVO  = 0x10,
+    PROTO_TYPE_MOTION = 0x11,
+    PROTO_TYPE_CYCLE  = 0x12,
+    PROTO_TYPE_ARM    = 0x13,
+    PROTO_TYPE_STATE  = 0xD0,
+    PROTO_TYPE_CONFIG = 0xE0,
+    PROTO_TYPE_DEBUG  = 0xF0,
 } proto_type_t;
 
 // SYS commands
@@ -58,15 +60,19 @@ typedef enum {
     MOTION_CMD_SET_PLAN   = 0x05,
     MOTION_CMD_GET_STATUS = 0x06,
     MOTION_CMD_STATUS     = 0x07,
-    MOTION_CMD_CYCLE_CREATE  = 0x10,
-    MOTION_CMD_CYCLE_START   = 0x11,
-    MOTION_CMD_CYCLE_RESTART = 0x12,
-    MOTION_CMD_CYCLE_PAUSE   = 0x13,
-    MOTION_CMD_CYCLE_RELEASE = 0x14,
-    MOTION_CMD_CYCLE_GET_STATUS = 0x15,
-    MOTION_CMD_CYCLE_STATUS     = 0x16,
-    MOTION_CMD_CYCLE_LIST    = 0x17,
 } proto_motion_cmd_t;
+
+// CYCLE commands
+typedef enum {
+    CYCLE_CMD_CREATE     = 0x00,
+    CYCLE_CMD_START      = 0x01,
+    CYCLE_CMD_RESTART    = 0x02,
+    CYCLE_CMD_PAUSE      = 0x03,
+    CYCLE_CMD_RELEASE    = 0x04,
+    CYCLE_CMD_GET_STATUS = 0x05,
+    CYCLE_CMD_STATUS     = 0x06,
+    CYCLE_CMD_LIST       = 0x07,
+} proto_cycle_cmd_t;
 
 // ARM commands
 typedef enum {
@@ -88,17 +94,19 @@ typedef enum {
 
 // STATE commands (device -> host)
 typedef enum {
-    STATE_CMD_SYS          = 0x01,
-    STATE_CMD_SERVO        = 0x02,
-    STATE_CMD_MOTION       = 0x03,
-    STATE_CMD_ARM          = 0x04,
-    STATE_CMD_CONFIG       = 0x05,
+    STATE_CMD_SYS    = 0x01,
+    STATE_CMD_SERVO  = 0x02,
+    STATE_CMD_MOTION = 0x03,
+    STATE_CMD_CYCLE  = 0x04,
+    STATE_CMD_ARM    = 0x05,
+    STATE_CMD_CONFIG = 0x06,
 } proto_state_cmd_t;
 
 // Listener entry points
 bool protocol_sys_handle(uint8_t cmd, const uint8_t* payload, uint16_t len);
 bool protocol_servo_handle(uint8_t cmd, const uint8_t* payload, uint16_t len);
 bool protocol_motion_handle(uint8_t cmd, const uint8_t* payload, uint16_t len);
+bool protocol_cycle_handle(uint8_t cmd, const uint8_t* payload, uint16_t len);
 bool protocol_arm_handle(uint8_t cmd, const uint8_t* payload, uint16_t len);
 bool protocol_config_handle(uint8_t cmd, const uint8_t* payload, uint16_t len);
 

@@ -74,13 +74,15 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     User/comm/protocol/listener/sys_listener.c
     User/comm/protocol/listener/servo_listener.c
     User/comm/protocol/listener/motion_listener.c
+    User/comm/protocol/listener/cycle_listener.c
     User/comm/protocol/listener/arm_listener.c
     User/comm/protocol/listener/config_listener.c
 
-    User/comm/protocol/codec/arm_codec.c
-    User/comm/protocol/codec/motion_codec.c
     User/comm/protocol/codec/protocol_codec.c
     User/comm/protocol/codec/servo_codec.c
+    User/comm/protocol/codec/motion_codec.c
+    User/comm/protocol/codec/cycle_codec.c
+    User/comm/protocol/codec/arm_codec.c
 
     ### comm - drivers 驱动
     User/comm/drivers/uart_driver.c
